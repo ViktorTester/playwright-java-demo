@@ -2,8 +2,8 @@ package api.endpoints;
 
 public enum Endpoint {
 
-    GET_ROOM("api/room"),
-    POST_AUTH_LOGIN("api/auth/login");
+    GET_ROOM("room"),
+    POST_AUTH_LOGIN("auth/login");
 
     private final String path;
 

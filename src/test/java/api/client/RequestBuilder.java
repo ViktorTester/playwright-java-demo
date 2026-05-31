@@ -3,6 +3,7 @@ package api.client;
 import api.endpoints.Endpoint;
 import com.microsoft.playwright.APIRequestContext;
 import com.microsoft.playwright.APIResponse;
+import com.microsoft.playwright.options.FormData;
 import com.microsoft.playwright.options.RequestOptions;
 import utils.ApiLogger;
 
@@ -21,9 +22,9 @@ public class RequestBuilder {
     private final Map<String, String> pathParams = new HashMap<>();
     private final Map<String, String> queryParams = new HashMap<>();
     private final Map<String, String> headers = new HashMap<>();
-    private final Map<String, String> params = new HashMap<>();
 
-    private Object body;
+    private Object jsonBody;
+    private FormData formBody;
 
     public RequestBuilder(
             APIRequestContext request,
@@ -50,13 +51,13 @@ public class RequestBuilder {
         return this;
     }
 
-    public RequestBuilder param(String name, String value) {
-        params.put(name, value);
+    public RequestBuilder jsonBody(Object body) {
+        this.jsonBody = body;
         return this;
     }
 
-    public RequestBuilder body(Object body) {
-        this.body = body;
+    public RequestBuilder formBody(FormData body) {
+        this.formBody = body;
         return this;
     }
 
@@ -94,17 +95,11 @@ public class RequestBuilder {
     }
 
     private RequestOptions buildOptions() {
-        validateBodyAndFormParams();
+        validateRequestBody();
 
         RequestOptions options = RequestOptions.create();
 
-        Map<String, String> allHeaders = new HashMap<>();
-
-        if (defaultHeaders != null) {
-            allHeaders.putAll(defaultHeaders);
-        }
-
-        allHeaders.putAll(headers);
+        Map<String, String> allHeaders = buildAllHeaders();
 
         for (Map.Entry<String, String> header : allHeaders.entrySet()) {
             options.setHeader(header.getKey(), header.getValue());
@@ -117,12 +112,12 @@ public class RequestBuilder {
             );
         }
 
-        if (body != null) {
-            options.setData(body);
+        if (jsonBody != null) {
+            options.setData(jsonBody);
         }
 
-        if (!params.isEmpty()) {
-            options.setData(params);
+        if (formBody != null) {
+            options.setData(formBody);
         }
 
         return options;
@@ -150,12 +145,12 @@ public class RequestBuilder {
     }
 
     private Object buildLoggedBody() {
-        if (body != null) {
-            return body;
+        if (jsonBody != null) {
+            return jsonBody;
         }
 
-        if (!params.isEmpty()) {
-            return params;
+        if (formBody != null) {
+            return formBody;
         }
 
         return null;
@@ -188,10 +183,10 @@ public class RequestBuilder {
         return URLEncoder.encode(String.valueOf(value), StandardCharsets.UTF_8);
     }
 
-    private void validateBodyAndFormParams() {
-        if (body != null && !params.isEmpty()) {
+    private void validateRequestBody() {
+        if (jsonBody != null && formBody != null) {
             throw new IllegalStateException(
-                    "Request cannot contain both body and form parameters"
+                    "Request cannot contain both JSON body and form body"
             );
         }
     }

@@ -12,27 +12,28 @@ import org.junit.jupiter.api.BeforeAll;
 import static config.TestConfig.baseApiUrl;
 
 public class BaseApiTest {
-    protected static Playwright playwright;
-    protected static APIRequestContext request;
-    protected static ApiClient apiClient;
+
+    private static Playwright playwright;
+    private static APIRequestContext request;
+
     protected static ApiContainer api;
-    static String authToken;
+    protected static ApiContainer authenticatedApi;
 
     @BeforeAll
     static void setupApi() {
-
         playwright = Playwright.create();
 
         request = playwright.request().newContext(new APIRequest.NewContextOptions()
                 .setBaseURL(baseApiUrl()));
 
-        apiClient = new ApiClient(request);
+        ApiClient apiClient = new ApiClient(request);
         api = new ApiContainer(apiClient);
 
-        // Get authToken
         AuthHelper authHelper = new AuthHelper(apiClient);
-        authToken = authHelper.getAuthToken();
+        String authToken = authHelper.getAuthToken();
 
+        ApiClient authenticatedApiClient = apiClient.withCookieToken(authToken);
+        authenticatedApi = new ApiContainer(authenticatedApiClient);
     }
 
     @AfterAll
