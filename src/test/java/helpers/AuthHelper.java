@@ -1,34 +1,31 @@
 package helpers;
 
-import com.microsoft.playwright.APIRequestContext;
+import api.client.ApiClient;
+import api.domains.ApiContainer;
 import com.microsoft.playwright.APIResponse;
-import com.microsoft.playwright.options.RequestOptions;
 
-import java.util.Map;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static api.assertions.ApiResponseValidator.verifyStatus;
 
 public class AuthHelper {
 
-    private final APIRequestContext request;
+    private final ApiContainer api;
 
-    public AuthHelper(APIRequestContext request) {
-        this.request = request;
+    public AuthHelper(ApiClient apiClient) {
+        this.api = new ApiContainer(apiClient);
     }
 
-    public String getAdminToken() {
-        APIResponse response = request.post("/api/auth/login",
-                RequestOptions.create()
-                        .setHeader("Content-Type", "application/json")
-                        .setData(Map.of(
-                                "username", "admin",
-                                "password", "password"
-                        ))
-        );
+    public String getAuthToken() {
+        APIResponse response = api.auth
+                .postAuthLogin()
+                .param("username", "admin")
+                .param("password", "password")
+                .post();
 
-        assertEquals(200, response.status(), "Login request failed. Body: " + response.text());
+        String responseBody = response.text();
 
-        return extractToken(response.text());
+        verifyStatus(response, 200);
+
+        return extractToken(responseBody);
     }
 
     private String extractToken(String responseBody) {

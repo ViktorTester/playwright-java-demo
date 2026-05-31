@@ -1,0 +1,18 @@
+package tests.ui;
+
+import base.BaseUiTest;
+import org.junit.jupiter.api.*;
+
+import static com.microsoft.playwright.assertions.PlaywrightAssertions.assertThat;
+import static config.TestConfig.baseUrl;
+
+class HomePageSmokeTest extends BaseUiTest {
+
+    @Test
+    void shouldOpenHomePage() {
+        page.navigate(baseUrl());
+
+        assertThat(page).hasTitle(java.util.regex.Pattern.compile("Restful-booker-platform demo"));
+        assertThat(page.locator("h1")).containsText("Welcome to Shady Meadows B&B");
+    }
+}
