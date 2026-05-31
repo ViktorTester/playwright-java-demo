@@ -2,9 +2,13 @@ package helpers;
 
 import api.client.ApiClient;
 import api.domains.ApiContainer;
+import api.dto.auth.AuthResponse;
 import com.microsoft.playwright.APIResponse;
 
+import java.util.Map;
+
 import static api.assertions.ApiResponseValidator.verifyStatus;
+import static utils.JsonUtils.fromJson;
 
 public class AuthHelper {
 
@@ -17,20 +21,24 @@ public class AuthHelper {
     public String getAuthToken() {
         APIResponse response = api.auth
                 .postAuthLogin()
-                .param("username", "admin")
-                .param("password", "password")
+                .jsonBody(Map.of(
+                        "username", "admin",
+                        "password", "password"
+                ))
                 .post();
 
         String responseBody = response.text();
 
         verifyStatus(response, 200);
 
-        return extractToken(responseBody);
-    }
+        AuthResponse authResponse = fromJson(responseBody, AuthResponse.class);
 
-    private String extractToken(String responseBody) {
-        return responseBody
-                .replace("{\"token\":\"", "")
-                .replace("\"}", "");
+        if (authResponse.token() == null || authResponse.token().isBlank()) {
+            throw new IllegalStateException(
+                    "Auth token is missing or empty. Response body: " + responseBody
+            );
+        }
+
+        return authResponse.token();
     }
 }

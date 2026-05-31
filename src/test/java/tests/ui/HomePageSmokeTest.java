@@ -9,6 +9,7 @@ import static config.TestConfig.baseUrl;
 class HomePageSmokeTest extends BaseUiTest {
 
     @Test
+    @DisplayName("Should open home page")
     void shouldOpenHomePage() {
         page.navigate(baseUrl());
 

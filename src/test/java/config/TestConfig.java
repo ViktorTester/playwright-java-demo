@@ -2,8 +2,8 @@ package config;
 
 public final class TestConfig {
 
-    private static final String DEFAULT_BASE_URL = "https://automationintesting.online";
-    private static final String DEFAULT_BASE_API_URL = "https://automationintesting.online/api";
+    public static final String DEFAULT_BASE_URL = "https://automationintesting.online/";
+    public static final String DEFAULT_BASE_API_URL = "https://automationintesting.online/api/";
 
     private TestConfig() {
     }
