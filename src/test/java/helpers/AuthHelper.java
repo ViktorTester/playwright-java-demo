@@ -8,6 +8,8 @@ import com.microsoft.playwright.APIResponse;
 import java.util.Map;
 
 import static api.assertions.ApiResponseValidator.verifyStatus;
+import static config.Config.adminPassword;
+import static config.Config.adminUsername;
 import static utils.JsonUtils.fromJson;
 
 public class AuthHelper {
@@ -22,8 +24,8 @@ public class AuthHelper {
         APIResponse response = api.auth
                 .postAuthLogin()
                 .jsonBody(Map.of(
-                        "username", "admin",
-                        "password", "password"
+                        "username", adminUsername(),
+                        "password", adminPassword()
                 ))
                 .post();
 
