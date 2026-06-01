@@ -4,7 +4,7 @@ import base.BaseUiTest;
 import org.junit.jupiter.api.*;
 
 import static com.microsoft.playwright.assertions.PlaywrightAssertions.assertThat;
-import static config.TestConfig.baseUrl;
+import static config.Config.baseUrl;
 
 class HomePageSmokeTest extends BaseUiTest {
 
