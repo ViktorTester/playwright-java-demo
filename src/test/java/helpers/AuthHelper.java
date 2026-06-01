@@ -7,7 +7,7 @@ import com.microsoft.playwright.APIResponse;
 
 import java.util.Map;
 
-import static api.assertions.ApiResponseValidator.verifyStatus;
+import static api.assertions.ApiResponseValidator.verifySuccessResponse;
 import static config.Config.adminPassword;
 import static config.Config.adminUsername;
 import static utils.JsonUtils.fromJson;
@@ -31,7 +31,7 @@ public class AuthHelper {
 
         String responseBody = response.text();
 
-        verifyStatus(response, 200);
+        verifySuccessResponse(response);
 
         AuthResponse authResponse = fromJson(responseBody, AuthResponse.class);
 

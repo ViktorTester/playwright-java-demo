@@ -5,7 +5,10 @@ import com.microsoft.playwright.APIResponse;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import static api.assertions.ApiResponseValidator.verifyStatus;
+import java.util.HashMap;
+import java.util.Map;
+
+import static api.assertions.ApiResponseValidator.*;
 
 class RoomApiSmokeTest extends BaseApiTest {
 
@@ -16,6 +19,9 @@ class RoomApiSmokeTest extends BaseApiTest {
                 .getRoom()
                 .get();
 
-        verifyStatus(response, 200);
+        Map<String, Object> expectedBody = new HashMap<>();
+        expectedBody.put("rooms", NotEmptyList);
+
+        verifyApiResponse(response, 200, expectedBody);
     }
 }
