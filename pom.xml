@@ -17,8 +17,6 @@
         <playwright.version>1.60.0</playwright.version>
         <surefire.version>3.2.5</surefire.version>
 
-        <!-- Empty by default: mvn clean test runs all tests -->
-        <test.groups></test.groups>
     </properties>
 
     <dependencies>
