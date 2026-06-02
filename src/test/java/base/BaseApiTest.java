@@ -6,42 +6,33 @@ import com.microsoft.playwright.APIRequest;
 import com.microsoft.playwright.APIRequestContext;
 import com.microsoft.playwright.Playwright;
 import config.Config;
-import helpers.AuthHelper;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 
-import static config.Config.baseApiUrl;
+import java.util.Map;
 
-public class BaseApiTest {
+public abstract class BaseApiTest {
 
-    private static Playwright playwright;
-    private static APIRequestContext request;
-    protected static ApiContainer api;
-    protected static ApiContainer authenticatedApi;
+    protected Playwright playwright;
+    protected APIRequestContext request;
+    protected ApiContainer api;
 
-    @BeforeAll
-    static void setupApi() {
+    @BeforeEach
+    void setUpApi() {
         Config.validate();
 
         playwright = Playwright.create();
 
         request = playwright.request().newContext(new APIRequest.NewContextOptions()
-                .setBaseURL(baseApiUrl())
+                .setBaseURL(Config.baseApiUrl())
                 .setTimeout(Config.apiTimeoutMs())
         );
 
-        ApiClient apiClient = new ApiClient(request);
-        api = new ApiContainer(apiClient);
-
-        AuthHelper authHelper = new AuthHelper(apiClient);
-        String authToken = authHelper.getAuthToken();
-
-        ApiClient authenticatedApiClient = apiClient.withCookieToken(authToken);
-        authenticatedApi = new ApiContainer(authenticatedApiClient);
+        api = new ApiContainer(new ApiClient(request, Map.of()));
     }
 
-    @AfterAll
-    static void tearDownApi() {
+    @AfterEach
+    void tearDownApi() {
         if (request != null) {
             request.dispose();
         }

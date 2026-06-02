@@ -1,6 +1,6 @@
 package tests.api;
 
-import base.BaseApiTest;
+import base.BaseAuthenticatedApiTest;
 import com.microsoft.playwright.APIResponse;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
@@ -15,11 +15,11 @@ import static tests.tags.TestTags.API;
 import static tests.tags.TestTags.SMOKE;
 
 @Tag(API)
-class RoomApiSmokeTest extends BaseApiTest {
+class RoomApiSmokeTest extends BaseAuthenticatedApiTest {
 
     @Test
     @Tag(SMOKE)
-    @DisplayName( "Should return rooms list")
+    @DisplayName("Should return rooms list")
     void shouldReturnRoomsList() {
         APIResponse response = authenticatedApi.room
                 .getRoom()
