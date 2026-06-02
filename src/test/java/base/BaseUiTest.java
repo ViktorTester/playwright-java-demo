@@ -2,45 +2,38 @@ package base;
 
 import com.microsoft.playwright.Browser;
 import com.microsoft.playwright.BrowserContext;
-import com.microsoft.playwright.BrowserType;
 import com.microsoft.playwright.Page;
 import com.microsoft.playwright.Playwright;
-import org.junit.jupiter.api.AfterAll;
+import config.Config;
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 
 public abstract class BaseUiTest {
 
-    protected static Playwright playwright;
-    protected static Browser browser;
-
+    protected Playwright playwright;
+    protected Browser browser;
     protected BrowserContext context;
     protected Page page;
 
-    @BeforeAll
-    static void launchBrowser() {
-        playwright = Playwright.create();
-
-        browser = playwright.chromium().launch(new BrowserType.LaunchOptions()
-                .setHeadless(Boolean.parseBoolean(System.getProperty("headless", "true"))));
-    }
-
     @BeforeEach
-    void createContextAndPage() {
+    void setUpUi() {
+        Config.validate();
+
+        playwright = Playwright.create();
+        browser = createBrowser(playwright);
+
         context = browser.newContext();
+        context.setDefaultTimeout(Config.defaultTimeoutMs());
+
         page = context.newPage();
     }
 
     @AfterEach
-    void closeContext() {
+    void tearDownUi() {
         if (context != null) {
             context.close();
         }
-    }
 
-    @AfterAll
-    static void closeBrowser() {
         if (browser != null) {
             browser.close();
         }
@@ -48,5 +41,22 @@ public abstract class BaseUiTest {
         if (playwright != null) {
             playwright.close();
         }
+    }
+
+    private Browser createBrowser(Playwright playwright) {
+        return switch (Config.browser()) {
+            case CHROMIUM -> playwright.chromium().launch(
+                    new com.microsoft.playwright.BrowserType.LaunchOptions()
+                            .setHeadless(Config.headless())
+            );
+            case FIREFOX -> playwright.firefox().launch(
+                    new com.microsoft.playwright.BrowserType.LaunchOptions()
+                            .setHeadless(Config.headless())
+            );
+            case WEBKIT -> playwright.webkit().launch(
+                    new com.microsoft.playwright.BrowserType.LaunchOptions()
+                            .setHeadless(Config.headless())
+            );
+        };
     }
 }
