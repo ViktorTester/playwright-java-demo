@@ -6,9 +6,15 @@ import org.junit.jupiter.api.*;
 import static com.microsoft.playwright.assertions.PlaywrightAssertions.assertThat;
 import static config.Config.baseUrl;
 
+import static tests.tags.TestTags.SMOKE;
+import static tests.tags.TestTags.UI;
+
+
+@Tag(UI)
 class HomePageSmokeTest extends BaseUiTest {
 
     @Test
+    @Tag(SMOKE)
     @DisplayName("Should open home page")
     void shouldOpenHomePage() {
         page.navigate(baseUrl());
