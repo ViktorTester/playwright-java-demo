@@ -5,6 +5,7 @@ import api.domains.ApiContainer;
 import com.microsoft.playwright.APIRequest;
 import com.microsoft.playwright.APIRequestContext;
 import com.microsoft.playwright.Playwright;
+import config.Config;
 import helpers.AuthHelper;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -15,16 +16,19 @@ public class BaseApiTest {
 
     private static Playwright playwright;
     private static APIRequestContext request;
-
     protected static ApiContainer api;
     protected static ApiContainer authenticatedApi;
 
     @BeforeAll
     static void setupApi() {
+        Config.validate();
+
         playwright = Playwright.create();
 
         request = playwright.request().newContext(new APIRequest.NewContextOptions()
-                .setBaseURL(baseApiUrl()));
+                .setBaseURL(baseApiUrl())
+                .setTimeout(Config.apiTimeoutMs())
+        );
 
         ApiClient apiClient = new ApiClient(request);
         api = new ApiContainer(apiClient);
