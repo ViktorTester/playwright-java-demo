@@ -3,11 +3,9 @@ package helpers;
 import api.domains.ApiContainer;
 import api.dto.auth.AuthResponse;
 import com.microsoft.playwright.APIResponse;
-import config.Config;
-
-import java.util.Map;
 
 import static api.assertions.ApiResponseValidator.verifySuccessResponse;
+import static testdata.TestUsers.adminCredentials;
 import static utils.JsonUtils.fromJson;
 
 public class AuthTokenProvider {
@@ -22,10 +20,7 @@ public class AuthTokenProvider {
         APIResponse response = api.auth
                 .postAuthLogin()
                 .header("Content-Type", "application/json")
-                .jsonBody(Map.of(
-                        "username", Config.adminUsername(),
-                        "password", Config.adminPassword()
-                ))
+                .jsonBody(adminCredentials())
                 .post();
 
         verifySuccessResponse(response);
