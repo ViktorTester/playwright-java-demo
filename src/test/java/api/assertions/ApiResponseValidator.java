@@ -1,366 +1,216 @@
 package api.assertions;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
+import api.assertions.matchers.ApiExpectedValue;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.microsoft.playwright.APIResponse;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
+import java.util.regex.Pattern;
 
-import static api.constants.ApiAssertionMessages.*;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.fail;
-import static utils.ApiLogger.logResponse;
+import static api.constants.ApiStatusCodes.OK;
+import static org.junit.jupiter.api.Assertions.*;
 
-/**
- * Utility class for validating Playwright API responses.
-
- * Supports:
- * - Status code validation
- * - JSON response body validation by path
- * - Reusable matchers like Exists, NotNull, NotEmptyList, NotEmptyMap
- */
-public class ApiResponseValidator {
-
-    public static final ExpectedValue Exists = ExpectedValue.exists();
-    public static final ExpectedValue NotNull = ExpectedValue.notNull();
-    public static final ExpectedValue NotEmpty = ExpectedValue.notEmpty();
-    public static final ExpectedValue NotEmptyList = ExpectedValue.notEmptyList();
-    public static final ExpectedValue NotEmptyMap = ExpectedValue.notEmptyMap();
-    public static final ExpectedValue NotEmptyLinkedMap = ExpectedValue.notEmptyMap();
+public final class ApiResponseValidator {
 
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
     private ApiResponseValidator() {
     }
 
-    /**
-     * Verifies that response status is 200 OK.
-     *
-     * @param response Playwright API response
-     */
     public static void verifySuccessResponse(APIResponse response) {
-        verifyStatus(response);
+        assertEquals(
+                OK,
+                response.status(),
+                "Expected successful API response. Response body: " + response.text()
+        );
     }
 
-    /**
-     * Verifies response status and expected values in the JSON response body.
-
-     * Expected body keys can be direct fields or nested paths, for example:
-     * - "id"
-     * - "transactions.first.id"
-     * - "user.roles[0].name"
-     *
-     * @param response Playwright API response
-     * @param expectedStatusCode expected HTTP status code
-     * @param expectedBody map of expected JSON paths and values
-     */
     public static void verifyApiResponse(
             APIResponse response,
             int expectedStatusCode,
             Map<String, Object> expectedBody
     ) {
-        assertNotNull(response, "API response must not be null");
-
-        String responseBody = response.text();
-
-        logResponse(response);
-
         assertEquals(
                 expectedStatusCode,
                 response.status(),
-                buildStatusErrorMessage(expectedStatusCode, response.status(), responseBody)
+                "Unexpected API status code. Response body: " + response.text()
         );
 
         if (expectedBody == null || expectedBody.isEmpty()) {
             return;
         }
 
-        Object actualBody = parseJson(responseBody);
+        Map<String, Object> actualBody = parseResponseBody(response);
 
-        for (Map.Entry<String, Object> expectation : expectedBody.entrySet()) {
-            String path = expectation.getKey();
-            Object expectedValue = expectation.getValue();
-
+        expectedBody.forEach((path, expectedValue) -> {
             Object actualValue = JsonPathReader.read(actualBody, path);
-
-            validateValue(path, expectedValue, actualValue, responseBody);
-        }
+            verifyValue(path, actualValue, expectedValue);
+        });
     }
 
-    /**
-     * Verifies default successful response status.
-     *
-     * @param response Playwright API response
-     */
-    private static void verifyStatus(APIResponse response) {
-        assertNotNull(response, "API response must not be null");
-
-        String responseBody = response.text();
-
-        logResponse(response);
-
-        assertEquals(
-                api.constants.ApiStatusCodes.OK,
-                response.status(),
-                buildStatusErrorMessage(api.constants.ApiStatusCodes.OK, response.status(), responseBody)
-        );
-    }
-
-    /**
-     * Parses raw JSON response body into Java objects.
-     *
-     * @param responseBody raw response body
-     * @return parsed JSON object
-     */
-    private static Object parseJson(String responseBody) {
+    private static Map<String, Object> parseResponseBody(APIResponse response) {
         try {
-            return OBJECT_MAPPER.readValue(responseBody, Object.class);
-        } catch (JsonProcessingException e) {
+            return OBJECT_MAPPER.readValue(
+                    response.text(),
+                    new TypeReference<>() {
+                    }
+            );
+        } catch (Exception exception) {
             throw new AssertionError(
-                    FAILED_TO_PARSE_RESPONSE_BODY
-                            + System.lineSeparator()
-                            + "Body: " + responseBody,
-                    e
+                    "Failed to parse API response body as JSON. Body: " + response.text(),
+                    exception
             );
         }
     }
 
-    /**
-     * Validates actual value against either direct expected value or custom matcher.
-     *
-     * @param path JSON path under validation
-     * @param expectedValue expected direct value or ExpectedValue matcher
-     * @param actualValue actual value from response body
-     * @param responseBody raw response body for assertion evidence
-     */
-    private static void validateValue(
-            String path,
-            Object expectedValue,
-            Object actualValue,
-            String responseBody
-    ) {
-        if (expectedValue instanceof ExpectedValue expectedMatcher) {
-            expectedMatcher.validate(path, actualValue, responseBody);
+    private static void verifyValue(String path, Object actualValue, Object expectedValue) {
+        if (expectedValue instanceof ApiExpectedValue apiExpectedValue) {
+            verifyMatcher(path, actualValue, apiExpectedValue);
             return;
         }
 
-        Object normalizedExpected = normalizeNumber(expectedValue);
-        Object normalizedActual = normalizeNumber(actualValue);
+        assertPathExists(path, actualValue);
 
-        if (!Objects.equals(normalizedExpected, normalizedActual)) {
-            fail(
-                    UNEXPECTED_VALUE_IN_API_RESPONSE
-                            + System.lineSeparator()
-                            + "Path: " + path
-                            + System.lineSeparator()
-                            + "Expected: " + expectedValue
-                            + System.lineSeparator()
-                            + "Actual: " + actualValue
-                            + System.lineSeparator()
-                            + "Body: " + responseBody
-            );
-        }
+        assertEquals(
+                expectedValue,
+                actualValue,
+                "Unexpected value for JSON path: " + path
+                        + ". Expected: " + expectedValue
+                        + ". Actual: " + actualValue
+        );
     }
 
-
-    /**
-     * Converts numeric values to string representation before comparison.
-     *
-     * @param value value to normalize
-     * @return normalized value
-     */
-    private static Object normalizeNumber(Object value) {
-        if (value instanceof Number number) {
-            return number.toString();
-        }
-
-        return value;
-    }
-
-    /**
-     * Builds detailed status mismatch message.
-     *
-     * @param expectedStatus expected HTTP status code
-     * @param actualStatus actual HTTP status code
-     * @param responseBody raw response body
-     * @return formatted assertion message
-     */
-    private static String buildStatusErrorMessage(
-            int expectedStatus,
-            int actualStatus,
-            String responseBody
+    private static void verifyMatcher(
+            String path,
+            Object actualValue,
+            ApiExpectedValue expectedValue
     ) {
-        return "Unexpected response status"
-                + System.lineSeparator()
-                + "Expected: " + expectedStatus
-                + System.lineSeparator()
-                + "Actual: " + actualStatus
-                + System.lineSeparator()
-                + "Body: " + responseBody;
-    }
+        switch (expectedValue.type()) {
+            case EQUALS -> {
+                assertPathExists(path, actualValue);
 
-    /**
-     * Custom expected value matcher used for flexible API response assertions.
-     */
-    public static final class ExpectedValue {
-
-        private final ExpectedValueType type;
-
-        private ExpectedValue(ExpectedValueType type) {
-            this.type = type;
-        }
-
-        private static ExpectedValue exists() {
-            return new ExpectedValue(ExpectedValueType.EXISTS);
-        }
-
-        private static ExpectedValue notNull() {
-            return new ExpectedValue(ExpectedValueType.NOT_NULL);
-        }
-
-        private static ExpectedValue notEmpty() {
-            return new ExpectedValue(ExpectedValueType.NOT_EMPTY);
-        }
-
-        private static ExpectedValue notEmptyList() {
-            return new ExpectedValue(ExpectedValueType.NOT_EMPTY_LIST);
-        }
-
-        private static ExpectedValue notEmptyMap() {
-            return new ExpectedValue(ExpectedValueType.NOT_EMPTY_MAP);
-        }
-
-
-        /**
-         * Applies matcher-specific validation.
-         *
-         * @param path JSON path under validation
-         * @param actualValue actual value from response body
-         * @param responseBody raw response body for assertion evidence
-         */
-        private void validate(String path, Object actualValue, String responseBody) {
-            switch (type) {
-                case EXISTS -> validateExists(path, actualValue, responseBody);
-                case NOT_NULL -> validateNotNull(path, actualValue, responseBody);
-                case NOT_EMPTY -> validateNotEmpty(path, actualValue, responseBody);
-                case NOT_EMPTY_LIST -> validateNotEmptyList(path, actualValue, responseBody);
-                case NOT_EMPTY_MAP -> validateNotEmptyMap(path, actualValue, responseBody);
-                default -> throw new IllegalStateException("Unsupported expected value type: " + type);
-            }
-        }
-
-        private void validateExists(String path, Object actualValue, String responseBody) {
-            if (actualValue == JsonPathReader.MISSING_VALUE) {
-                fail(buildMatcherError(EXPECTED_PATH_TO_EXIST, path, actualValue, responseBody));
-            }
-        }
-
-        private void validateNotNull(String path, Object actualValue, String responseBody) {
-            validateExists(path, actualValue, responseBody);
-
-            if (actualValue == null) {
-                fail(buildMatcherError(RESPONSE_MUST_NOT_BE_NULL, path, actualValue, responseBody));
-            }
-        }
-
-        private void validateNotEmpty(String path, Object actualValue, String responseBody) {
-            validateExists(path, actualValue, responseBody);
-
-            if (actualValue == null) {
-                fail(buildMatcherError(EXPECTED_VALUE_NOT_TO_BE_NULL_OR_EMPTY, path, actualValue, responseBody));
+                assertEquals(
+                        expectedValue.expectedValue(),
+                        actualValue,
+                        "Unexpected value for JSON path: " + path
+                                + ". Expected: " + expectedValue.expectedValue()
+                                + ". Actual: " + actualValue
+                );
             }
 
-            if (actualValue instanceof String stringValue) {
+            case EXISTS -> assertTrue(
+                    pathExists(actualValue),
+                    "Expected JSON path to exist: " + path
+            );
 
-                if (stringValue.isBlank()) {
-                    fail(buildMatcherError(EXPECTED_STRING_NOT_TO_BE_EMPTY, path, actualValue, responseBody));
-                }
+            case NOT_NULL -> {
+                assertPathExists(path, actualValue);
 
-                return;
+                assertNotNull(actualValue, "Expected value not to be null for JSON path: " + path);
             }
 
-            if (actualValue instanceof List<?> listValue) {
+            case NOT_BLANK_STRING -> {
+                assertPathExists(path, actualValue);
 
-                if (listValue.isEmpty()) {
-                    fail(buildMatcherError(EXPECTED_LIST_NOT_TO_BE_EMPTY, path, actualValue, responseBody));
-                }
-
-                return;
+                assertTrue(
+                        actualValue instanceof String stringValue && !stringValue.isBlank(),
+                        "Expected non-blank string for JSON path: " + path
+                                + ". Actual value: " + actualValue
+                );
             }
 
-            if (actualValue instanceof Map<?, ?> mapValue) {
+            case NOT_EMPTY_LIST -> {
+                assertPathExists(path, actualValue);
 
-                if (mapValue.isEmpty()) {
-                    fail(buildMatcherError(EXPECTED_MAP_NOT_TO_BE_EMPTY, path, actualValue, responseBody));
-                }
-            }
-        }
-
-        private void validateNotEmptyList(String path, Object actualValue, String responseBody) {
-            validateExists(path, actualValue, responseBody);
-
-            if (!(actualValue instanceof List<?>)) {
-                fail(buildMatcherError(EXPECTED_VALUE_TO_BE_A_LIST, path, actualValue, responseBody));
+                assertTrue(
+                        actualValue instanceof List<?> listValue && !listValue.isEmpty(),
+                        "Expected non-empty list for JSON path: " + path
+                                + ". Actual value: " + actualValue
+                );
             }
 
-            List<?> listValue = (List<?>) actualValue;
+            case NOT_EMPTY_MAP -> {
+                assertPathExists(path, actualValue);
 
-            if (listValue.isEmpty()) {
-                fail(buildMatcherError(EXPECTED_LIST_NOT_TO_BE_EMPTY, path, actualValue, responseBody));
-            }
-        }
-
-        private void validateNotEmptyMap(String path, Object actualValue, String responseBody) {
-            validateExists(path, actualValue, responseBody);
-
-            if (!(actualValue instanceof Map<?, ?>)) {
-                fail(buildMatcherError(EXPECTED_VALUE_TO_BE_A_MAP, path, actualValue, responseBody));
+                assertTrue(
+                        actualValue instanceof Map<?, ?> mapValue && !mapValue.isEmpty(),
+                        "Expected non-empty map for JSON path: " + path
+                                + ". Actual value: " + actualValue
+                );
             }
 
-            Map<?, ?> mapValue = (Map<?, ?>) actualValue;
-
-            if (mapValue.isEmpty()) {
-                fail(buildMatcherError(EXPECTED_MAP_NOT_TO_BE_EMPTY, path, actualValue, responseBody));
+            case CONTAINS -> {
+                assertPathExists(path, actualValue);
+                assertContains(path, actualValue, expectedValue.expectedValue());
             }
-        }
 
-        /**
-         * Builds a detailed matcher failure message.
-         *
-         * @param message assertion message
-         * @param path JSON path under validation
-         * @param actualValue actual value from response body
-         * @param responseBody raw response body
-         * @return formatted assertion message
-         */
-        private String buildMatcherError(
-                String message,
-                String path,
-                Object actualValue,
-                String responseBody
-        ) {
-            return message
-                    + System.lineSeparator()
-                    + "Path: " + path
-                    + System.lineSeparator()
-                    + "Actual: " + actualValue
-                    + System.lineSeparator()
-                    + "Body: " + responseBody;
+            case MATCHES_REGEX -> {
+                assertPathExists(path, actualValue);
+                assertMatchesRegex(path, actualValue, expectedValue.expectedValue());
+            }
+
+            case GREATER_THAN -> {
+                assertPathExists(path, actualValue);
+                assertGreaterThan(path, actualValue, expectedValue.expectedValue());
+            }
+
+            case LESS_THAN -> {
+                assertPathExists(path, actualValue);
+                assertLessThan(path, actualValue, expectedValue.expectedValue());
+            }
         }
     }
 
+    private static void assertContains(String path, Object actualValue, Object expectedValue) {
+        assertTrue(
+                actualValue instanceof String actualString
+                        && expectedValue instanceof String expectedString
+                        && actualString.contains(expectedString),
+                "Expected string for JSON path '" + path + "' to contain: " + expectedValue
+                        + ". Actual value: " + actualValue
+        );
+    }
 
-    /**
-     * Supported matcher types for expected API response values.
-     */
-    private enum ExpectedValueType {
-        EXISTS,
-        NOT_NULL,
-        NOT_EMPTY,
-        NOT_EMPTY_LIST,
-        NOT_EMPTY_MAP
+    private static void assertMatchesRegex(String path, Object actualValue, Object expectedValue) {
+        assertTrue(
+                actualValue instanceof String actualString
+                        && expectedValue instanceof String regex
+                        && Pattern.compile(regex).matcher(actualString).matches(),
+                "Expected string for JSON path '" + path + "' to match regex: " + expectedValue
+                        + ". Actual value: " + actualValue
+        );
+    }
+
+    private static void assertGreaterThan(String path, Object actualValue, Object expectedValue) {
+        assertTrue(
+                actualValue instanceof Number actualNumber
+                        && expectedValue instanceof Number expectedNumber
+                        && actualNumber.doubleValue() > expectedNumber.doubleValue(),
+                "Expected numeric value for JSON path '" + path + "' to be greater than: " + expectedValue
+                        + ". Actual value: " + actualValue
+        );
+    }
+
+    private static void assertLessThan(String path, Object actualValue, Object expectedValue) {
+        assertTrue(
+                actualValue instanceof Number actualNumber
+                        && expectedValue instanceof Number expectedNumber
+                        && actualNumber.doubleValue() < expectedNumber.doubleValue(),
+                "Expected numeric value for JSON path '" + path + "' to be less than: " + expectedValue
+                        + ". Actual value: " + actualValue
+        );
+    }
+
+    private static void assertPathExists(String path, Object actualValue) {
+        assertTrue(
+                pathExists(actualValue),
+                "Expected JSON path to exist: " + path
+        );
+    }
+
+    private static boolean pathExists(Object actualValue) {
+        return actualValue != JsonPathReader.MISSING_VALUE;
     }
 }

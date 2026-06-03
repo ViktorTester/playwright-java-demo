@@ -1,5 +1,6 @@
 package tests.api;
 
+import api.assertions.ApiExpect;
 import base.BaseAuthenticatedApiTest;
 import com.microsoft.playwright.APIResponse;
 import org.junit.jupiter.api.DisplayName;
@@ -9,7 +10,6 @@ import org.junit.jupiter.api.Test;
 import java.util.HashMap;
 import java.util.Map;
 
-import static api.assertions.ApiResponseValidator.NotEmptyList;
 import static api.assertions.ApiResponseValidator.verifyApiResponse;
 import static tests.tags.TestTags.API;
 import static tests.tags.TestTags.SMOKE;
@@ -26,7 +26,7 @@ class RoomApiSmokeTest extends BaseAuthenticatedApiTest {
                 .get();
 
         Map<String, Object> expectedBody = new HashMap<>();
-        expectedBody.put("rooms", NotEmptyList);
+        expectedBody.put("rooms", ApiExpect.notEmptyList());
 
         verifyApiResponse(response, 200, expectedBody);
     }
