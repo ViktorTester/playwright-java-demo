@@ -14,12 +14,17 @@ import static api.assertions.ApiResponseValidator.verifyApiResponse;
 import static tests.tags.TestTags.API;
 import static tests.tags.TestTags.SMOKE;
 
+/**
+ Positive
+ {@link #shouldReturnRoomsList} (GET/room) Should return rooms list
+ */
+
 @Tag(API)
-class RoomApiSmokeTest extends BaseAuthenticatedApiTest {
+class RoomApiTest extends BaseAuthenticatedApiTest {
 
     @Test
     @Tag(SMOKE)
-    @DisplayName("Should return rooms list")
+    @DisplayName("(GET/room) Should return rooms list")
     void shouldReturnRoomsList() {
         APIResponse response = authenticatedApi.room
                 .getRoom()
@@ -30,4 +35,6 @@ class RoomApiSmokeTest extends BaseAuthenticatedApiTest {
 
         verifyApiResponse(response, 200, expectedBody);
     }
+
+
 }
