@@ -2,9 +2,9 @@ package tests.ui;
 
 import base.BaseUiTest;
 import org.junit.jupiter.api.*;
-
-import static com.microsoft.playwright.assertions.PlaywrightAssertions.assertThat;
-import static config.Config.baseUrl;
+import pages.HomePage;
+import pages.LoginPage;
+import pages.RoomsPage;
 
 import static tests.tags.TestTags.SMOKE;
 import static tests.tags.TestTags.UI;
@@ -15,11 +15,21 @@ class HomePageSmokeTest extends BaseUiTest {
 
     @Test
     @Tag(SMOKE)
-    @DisplayName("Should open home page")
+    @DisplayName("Should login as Admin")
     void shouldOpenHomePage() {
-        page.navigate(baseUrl());
 
-        assertThat(page).hasTitle(java.util.regex.Pattern.compile("Restful-booker-platform demo"));
-        assertThat(page.locator("h1")).containsText("Welcome to Shady Meadows B&B");
+        HomePage homePage = new HomePage(page);
+        LoginPage loginPage = new LoginPage(page);
+        RoomsPage roomsPage = new RoomsPage(page);
+
+        homePage.open();
+        homePage.shouldBeOpened();
+
+        homePage.openAdminSection();
+
+        loginPage.login("admin", "password");
+
+        roomsPage.shouldSeeReportSection();
+
     }
 }
