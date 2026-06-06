@@ -3,6 +3,7 @@ package tests.api;
 import api.assertions.ApiExpect;
 import base.BaseApiTest;
 import com.microsoft.playwright.APIResponse;
+import io.qameta.allure.Feature;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -28,6 +29,7 @@ import static tests.tags.TestTags.SMOKE;
  */
 
 @Tag(API)
+@Feature("Login")
 class AuthApiTest extends BaseApiTest {
 
     @Test

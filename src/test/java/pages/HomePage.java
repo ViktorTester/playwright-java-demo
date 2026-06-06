@@ -3,6 +3,7 @@ package pages;
 import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
 import com.microsoft.playwright.options.AriaRole;
+import io.qameta.allure.Step;
 
 import java.util.regex.Pattern;
 
@@ -28,15 +29,18 @@ public class HomePage extends BasePage {
         );
     }
 
+    @Step("Open home page")
     public void open() {
         open(baseUrl());
     }
 
+    @Step("Verify home page is opened")
     public void shouldBeOpened() {
         assertThat(page).hasTitle(PAGE_TITLE);
         assertThat(header).containsText(EXPECTED_HEADER);
     }
 
+    @Step("Verify admin section is opened")
     public void openAdminSection() {
         adminLink.click();
     }

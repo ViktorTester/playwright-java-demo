@@ -5,10 +5,14 @@ import com.microsoft.playwright.BrowserContext;
 import com.microsoft.playwright.Page;
 import com.microsoft.playwright.Playwright;
 import config.Config;
+import extensions.HasPage;
+import extensions.UiTestWatcher;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.extension.ExtendWith;
 
-public abstract class BaseUiTest {
+@ExtendWith(UiTestWatcher.class)
+public abstract class BaseUiTest implements HasPage {
 
     protected Playwright playwright;
     protected Browser browser;
@@ -41,6 +45,11 @@ public abstract class BaseUiTest {
         if (playwright != null) {
             playwright.close();
         }
+    }
+
+    @Override
+    public Page page() {
+        return page;
     }
 
     private Browser createBrowser(Playwright playwright) {

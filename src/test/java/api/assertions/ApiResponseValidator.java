@@ -11,6 +11,7 @@ import java.util.regex.Pattern;
 
 import static api.constants.ApiStatusCodes.OK;
 import static org.junit.jupiter.api.Assertions.*;
+import static utils.AllureAttachments.attachJson;
 
 public final class ApiResponseValidator {
 
@@ -20,6 +21,9 @@ public final class ApiResponseValidator {
     }
 
     public static void verifySuccessResponse(APIResponse response) {
+
+        attachJson("API response body", response.text());
+
         assertEquals(
                 OK,
                 response.status(),
@@ -37,6 +41,8 @@ public final class ApiResponseValidator {
                 response.status(),
                 "Unexpected API status code. Response body: " + response.text()
         );
+
+        attachJson("API response body", response.text());
 
         if (expectedBody == null || expectedBody.isEmpty()) {
             return;

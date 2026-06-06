@@ -1,6 +1,7 @@
 package tests.ui;
 
 import base.BaseUiTest;
+import io.qameta.allure.Feature;
 import org.junit.jupiter.api.*;
 import pages.HomePage;
 import pages.LoginPage;
@@ -9,8 +10,8 @@ import pages.RoomsPage;
 import static tests.tags.TestTags.SMOKE;
 import static tests.tags.TestTags.UI;
 
-
 @Tag(UI)
+@Feature("Home page")
 class HomePageSmokeTest extends BaseUiTest {
 
     @Test
