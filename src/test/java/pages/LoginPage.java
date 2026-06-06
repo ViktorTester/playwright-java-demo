@@ -3,6 +3,7 @@ package pages;
 import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
 import com.microsoft.playwright.options.AriaRole;
+import io.qameta.allure.Step;
 
 public class LoginPage extends BasePage {
 
@@ -19,6 +20,7 @@ public class LoginPage extends BasePage {
                 new Page.GetByRoleOptions().setName("Login"));
     }
 
+    @Step("Log in attempt")
     public void login(String login, String password) {
         loginInput.fill(login);
         passwordInput.fill(password);

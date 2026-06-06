@@ -17,6 +17,9 @@
         <playwright.version>1.60.0</playwright.version>
         <surefire.version>3.2.5</surefire.version>
 
+        <allure.version>2.35.2</allure.version>
+        <aspectj.version>1.9.22.1</aspectj.version>
+
     </properties>
 
     <dependencies>
@@ -44,6 +47,21 @@
             <artifactId>dotenv-java</artifactId>
             <version>3.0.0</version>
         </dependency>
+
+    <dependency>
+        <groupId>io.qameta.allure</groupId>
+        <artifactId>allure-junit5</artifactId>
+        <version>${allure.version}</version>
+        <scope>test</scope>
+    </dependency>
+
+    <dependency>
+        <groupId>org.aspectj</groupId>
+        <artifactId>aspectjweaver</artifactId>
+        <version>${aspectj.version}</version>
+        <scope>test</scope>
+    </dependency>
+
     </dependencies>
 
     <build>
@@ -57,13 +75,23 @@
                         <include>**/*Test.java</include>
                     </includes>
 
-                    <!-- JUnit 5 tags. Controlled by Maven profiles below. -->
                     <groups>${test.groups}</groups>
 
+                    <argLine>
+                        -javaagent:${settings.localRepository}/org/aspectj/aspectjweaver/${aspectj.version}/aspectjweaver-${aspectj.version}.jar
+                    </argLine>
+
                     <systemPropertyVariables>
-                        <headless>true</headless>
+                        <allure.results.directory>${project.build.directory}/allure-results</allure.results.directory>
                     </systemPropertyVariables>
                 </configuration>
+                <dependencies>
+                    <dependency>
+                        <groupId>org.aspectj</groupId>
+                        <artifactId>aspectjweaver</artifactId>
+                        <version>${aspectj.version}</version>
+                    </dependency>
+                </dependencies>
             </plugin>
         </plugins>
     </build>

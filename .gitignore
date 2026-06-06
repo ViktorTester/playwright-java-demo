@@ -5,3 +5,7 @@ target/
 playwright-report/
 test-results/
 .env
+
+# Allure
+target/allure-results/
+target/allure-report/

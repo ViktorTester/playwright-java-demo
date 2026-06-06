@@ -6,11 +6,15 @@ import com.microsoft.playwright.APIRequest;
 import com.microsoft.playwright.APIRequestContext;
 import com.microsoft.playwright.Playwright;
 import config.Config;
+import io.qameta.allure.Epic;
+import io.qameta.allure.Owner;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 
 import java.util.Map;
 
+@Epic("API")
+@Owner("Viktor")
 public abstract class BaseApiTest {
 
     protected Playwright playwright;

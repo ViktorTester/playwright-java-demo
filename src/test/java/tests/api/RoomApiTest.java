@@ -3,6 +3,7 @@ package tests.api;
 import api.assertions.ApiExpect;
 import base.BaseAuthenticatedApiTest;
 import com.microsoft.playwright.APIResponse;
+import io.qameta.allure.Feature;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -16,15 +17,16 @@ import static tests.tags.TestTags.SMOKE;
 
 /**
  Positive
- {@link #shouldReturnRoomsList} (GET/room) Should return rooms list
+ {@link #shouldReturnRoomsList} (GET/room) Should return a room list
  */
 
 @Tag(API)
+@Feature("Room")
 class RoomApiTest extends BaseAuthenticatedApiTest {
 
     @Test
     @Tag(SMOKE)
-    @DisplayName("(GET/room) Should return rooms list")
+    @DisplayName("(GET/room) Should return a rooms list")
     void shouldReturnRoomsList() {
         APIResponse response = authenticatedApi.room
                 .getRoom()
