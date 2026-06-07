@@ -17,8 +17,8 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      BASE_URL: https://automationintesting.online
-      BASE_API_URL: https://automationintesting.online/api
+      BASE_URL: ${{ secrets.BASE_URL }}
+      BASE_API_URL: ${{ secrets.BASE_API_URL }}
       ADMIN_USERNAME: ${{ secrets.ADMIN_USERNAME }}
       ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
       BROWSER: chromium
